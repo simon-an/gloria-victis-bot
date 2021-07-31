@@ -3,8 +3,20 @@ use std::{sync::{Arc, Mutex}, thread::sleep, time::Duration};
 #[allow(dead_code)]
 mod screen;
 
-fn main() {
+// #[cfg(feature = "opencv1")]
+mod ocv;
+mod ocv2;
 
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    // tokio::spawn(async move {
+    //     ocv::run().await.unwrap();
+    // });
+
+    tokio::spawn(async move {
+        ocv2::run().await.unwrap();
+    });
     let running: Arc<Mutex<bool>>= Arc::new(Mutex::new(true));
     let counter: Arc<Mutex<u32>>= Arc::new(Mutex::new(0));
 
@@ -106,4 +118,5 @@ fn main() {
 
     // Call this to start listening for bound inputs.
     handle_input_events();
+    Ok(())
 }

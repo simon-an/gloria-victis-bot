@@ -4,8 +4,6 @@
 extern crate winapi;
 extern crate wio;
 
-
-
 use std::mem::zeroed;
 use std::{mem, ptr, slice};
 use winapi::shared::dxgi::{
