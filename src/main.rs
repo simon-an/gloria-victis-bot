@@ -26,17 +26,21 @@ fn main() {
     let c1 = Arc::clone(&counter);
     F6Key.bind(move || {
         *r3.lock().unwrap() = true;
-        *c1.lock().unwrap() = 0;
-        FKey.press();
+        let mut counter =  *c1.lock().unwrap();
+        counter = 0;
+        Numrow8Key.press();
         sleep(Duration::from_millis(50));
-        FKey.release();
-        while *r3.lock().unwrap() && *c1.lock().unwrap() < 50 {
-            println!("Give me my wood {}", *c1.lock().unwrap());
+        Numrow8Key.release();
+        Numrow8Key.press();
+        sleep(Duration::from_millis(50));
+        Numrow8Key.release();
+        while *r3.lock().unwrap() && counter < 50 {
+            println!("Give me my wood {}", counter);
             MiddleButton.press();
-            sleep(Duration::from_millis(450));
+            sleep(Duration::from_millis(50));
             MiddleButton.release();
             sleep(Duration::from_millis(700));
-            *c1.lock().unwrap() += 1;
+            counter += 1;
         }
         FKey.press();
         sleep(Duration::from_millis(50));
@@ -48,15 +52,18 @@ fn main() {
     F7Key.bind(move || {
         *c2.lock().unwrap() = 0;
         *r5.lock().unwrap() = true;
-        FKey.press();
+        Numrow9Key.press();
         sleep(Duration::from_millis(50));
-        FKey.release();
-        while *r5.lock().unwrap()  && *c2.lock().unwrap() < 18 {
+        Numrow9Key.release();
+        Numrow9Key.press();
+        sleep(Duration::from_millis(50));
+        Numrow9Key.release();
+        while *r5.lock().unwrap()  && *c2.lock().unwrap() < 28 {
             println!("Give me my iron {}", *c2.lock().unwrap());
             MiddleButton.press();
-            sleep(Duration::from_millis(420));
+            sleep(Duration::from_millis(50));
             MiddleButton.release();
-            sleep(Duration::from_millis(900));
+            sleep(Duration::from_millis(2000));
             *c2.lock().unwrap() += 1;
         }
         FKey.press();
@@ -69,16 +76,22 @@ fn main() {
     F8Key.bind(move || {
         *c4.lock().unwrap() = 0;
         *r7.lock().unwrap() = true;
+        Numrow9Key.press();
+        sleep(Duration::from_millis(50));
+        Numrow9Key.release();
+        Numrow9Key.press();
+        sleep(Duration::from_millis(50));
+        Numrow9Key.release();
         while *r7.lock().unwrap()  && *c4.lock().unwrap() < 18 {
             FKey.press();
             sleep(Duration::from_millis(50));
             FKey.release();
-            while *c4.lock().unwrap() < 18 {
+            while *r7.lock().unwrap() && *c4.lock().unwrap() < 30 {
                 println!("Give me my iron {}", *c4.lock().unwrap());
                 MiddleButton.press();
-                sleep(Duration::from_millis(420));
+                sleep(Duration::from_millis(50));
                 MiddleButton.release();
-                sleep(Duration::from_millis(900));
+                sleep(Duration::from_millis(1600));
                 *c4.lock().unwrap() += 1;
             }
             *c4.lock().unwrap() = 0;
