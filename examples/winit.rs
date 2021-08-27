@@ -1,4 +1,9 @@
-use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, monitor::{MonitorHandle, VideoMode}, window::{Fullscreen, WindowBuilder}};
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    monitor::{MonitorHandle, VideoMode},
+    window::{Fullscreen, WindowBuilder},
+};
 
 fn main() {
     let event_loop = EventLoop::new();
