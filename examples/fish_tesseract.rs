@@ -1,67 +1,87 @@
 use opencv::{
-    core::{self, bitwise_not, UMat, UMatUsageFlags},
+    core::{self, bitwise_not, Point2d, UMat, UMatUsageFlags, Vector},
     highgui, imgcodecs,
-    imgproc::{self, ThresholdTypes, THRESH_BINARY, THRESH_BINARY_INV, THRESH_OTSU},
+    imgproc::{
+        self, AdaptiveThresholdTypes, ContourApproximationModes, RetrievalModes, ThresholdTypes,
+        ADAPTIVE_THRESH_GAUSSIAN_C, ADAPTIVE_THRESH_MEAN_C, CHAIN_APPROX_SIMPLE, HOUGH_GRADIENT,
+        LINE_AA, RETR_LIST, THRESH_BINARY, THRESH_BINARY_INV, THRESH_OTSU, THRESH_TOZERO,
+        THRESH_TOZERO_INV, THRESH_TRIANGLE,
+    },
     prelude::*,
-    types, Result,
+    types::{self, VectorOfPoint, VectorOfPoint2d},
+    Result,
 };
 use tesseract::{OcrEngineMode, Tesseract};
 
 fn main() -> anyhow::Result<()> {
-    let window = "demo";
-    highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
+    let folder = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    std::env::set_var("TESSDATA_PREFIX", format!("{}\\{}", folder, "tessdata"));
+    println!("{}", folder);
 
-    let img = imgcodecs::imread("images/rechts.png", imgcodecs::IMREAD_COLOR)?;
+    // adaptiveThreshold, findContours,
+
+    let img = imgcodecs::imread("images/32x10.jpg", imgcodecs::IMREAD_COLOR)?;
+    // let img = imgcodecs::imread("images/Screenshot 2021-08-27 221642.jpg", imgcodecs::IMREAD_COLOR)?;
+
+    // let rect = highgui::select_roi(&img, true, true)?;
+    // let rect = core::Rect {  x: 584, y: 678, width: 178, height: 236 };
+    let rect = core::Rect {
+        x: 1905,
+        y: 736,
+        width: 478,
+        height: 472,
+    };
+    println!("{:?}", rect);
+    let img = Mat::roi(&img, rect)?;
+
     let mut gray = Mat::default();
     imgproc::cvt_color(&img, &mut gray, imgproc::COLOR_BGR2GRAY, 0)?;
-    let mut blurred = Mat::default();
-    highgui::imshow(window, &gray)?;
-    highgui::wait_key(10000).unwrap();
-    imgproc::gaussian_blur(
-        &gray,
-        &mut blurred,
-        core::Size::new(7, 7),
-        1.5,
-        0.,
-        core::BORDER_DEFAULT,
-    )?;
-    println!("blured {:?}", gray.typ());
-    highgui::imshow(window, &blurred)?;
-    highgui::wait_key(10000).unwrap();
 
-    let mut edges = Mat::default();
-    imgproc::canny(&blurred, &mut edges, 0., 50., 3, false)?;
-    highgui::imshow(window, &edges)?;
-    highgui::wait_key(10000).unwrap();
-
-    let folder = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    println!("{}", folder);
-    let empty_mat = Mat::default();
+    let window1 = "adaptive_threshold";
+    let window2 = "1THRESH_OTSU";
+    let window3 = "2THRESH_TRIANGLE";
+    highgui::named_window(window1, highgui::WINDOW_AUTOSIZE)?;
+    highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
+    highgui::named_window(window3, highgui::WINDOW_AUTOSIZE)?;
     let mut text = Mat::default();
+    opencv::imgproc::adaptive_threshold(
+        &gray,
+        &mut text,
+        255f64,
+        ADAPTIVE_THRESH_GAUSSIAN_C,
+        THRESH_BINARY,
+        3,
+        15.0,
+    )?;
+    highgui::imshow(window1, &text)?;
     let mut text2 = Mat::default();
-    bitwise_not(&gray, &mut text, &empty_mat)?;
-
-    opencv::imgproc::threshold(&text, &mut text2, 50f64, 255f64, THRESH_BINARY_INV)?;
-
-    highgui::imshow(window, &text2)?;
+    opencv::imgproc::threshold(
+        &gray,
+        &mut text2,
+        0f64,
+        255f64,
+        THRESH_BINARY_INV | THRESH_OTSU,
+    )?;
+    highgui::imshow(window2, &text2)?;
+    let mut text3 = Mat::default();
+    opencv::imgproc::threshold(
+        &gray,
+        &mut text3,
+        0f64,
+        255f64,
+        THRESH_BINARY_INV | THRESH_TRIANGLE,
+    )?;
+    highgui::imshow(window3, &text3)?;
     highgui::wait_key(10000).unwrap();
-    // imgcodecs::imwrite("x2.tiff", &text2, &opencv::types::VectorOfi32::new())? ;
 
-    std::env::set_var("TESSDATA_PREFIX", format!("{}\\{}", folder, "tessdata"));
-    // let temp =  Tesseract::new_with_oem(None, Some("deu_frak"), OcrEngineMode::Default)?;
-    // println!("{:?}", frame);
-    // let only_lstm_str = temp.set_image("x.tiff")?
-    // .recognize()?
-    // .get_text()?;
-    // println!("{}", only_lstm_str);
-    let temp = Tesseract::new_with_oem(None, Some("deu_frak"), OcrEngineMode::Default)?;
-    let frame = text2.data_typed::<u8>()?;
+    let temp = Tesseract::new_with_oem(None, Some("deu"), OcrEngineMode::Default)?;
+    let frame = text3.data_typed::<u8>()?;
     let only_lstm_str = temp
-        .set_frame(&frame, text2.cols(), text2.rows(), 1i32, text2.cols())?
-        // let only_lstm_str = temp.set_image("x2.tiff")?
+        .set_frame(&frame, text.cols(), text.rows(), 1i32, text.cols())?
         .recognize()?
         .get_text()?;
     println!("{}", only_lstm_str);
+    assert!(only_lstm_str.contains("Absenken"));
 
     Ok(())
 }

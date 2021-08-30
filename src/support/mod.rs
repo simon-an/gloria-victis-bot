@@ -6,7 +6,6 @@ use glium::{Display, Surface};
 use imgui::{Context, FontConfig, FontSource, Ui};
 use imgui_glium_renderer::Renderer;
 use imgui_winit_support::{HiDpiMode, WinitPlatform};
-use winit::window::Fullscreen;
 use std::path::Path;
 use std::time::Instant;
 
@@ -22,7 +21,6 @@ pub struct System {
 }
 
 pub fn init(title: &str) -> System {
-
     let title = match Path::new(&title).file_name() {
         Some(file_name) => file_name.to_str().unwrap(),
         None => title,
@@ -32,11 +30,10 @@ pub fn init(title: &str) -> System {
     let builder = WindowBuilder::new()
         .with_transparent(true)
         // .with_always_on_top(true)
-        .with_decorations(false)
+        // .with_decorations(false)
         .with_title(title.to_owned())
-        .with_fullscreen(Some(Fullscreen::Borderless(None)))
-        // .with_inner_size(glutin::dpi::LogicalSize::new(1024f64, 768f64))
-        ;
+        // .with_fullscreen(Some(Fullscreen::Borderless(None)))
+        .with_inner_size(glutin::dpi::LogicalSize::new(400f64, 250f64));
     let display =
         Display::new(builder, context, &event_loop).expect("Failed to initialize display");
 
@@ -126,7 +123,7 @@ impl System {
 
                 let gl_window = display.gl_window();
                 let mut target = display.draw();
-                target.clear_color_srgb(1.0, 1.0, 1.0, 1.0);
+                target.clear_color_srgb(1.0, 1.0, 1.0, 0.0);
                 platform.prepare_render(&ui, gl_window.window());
                 let draw_data = ui.render();
                 renderer

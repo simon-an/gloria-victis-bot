@@ -1,9 +1,5 @@
 use inputbot::{KeybdKey::*, MouseButton, MouseCursor};
-use std::{
-    sync::{Arc},
-    thread::sleep,
-    time::Duration,
-};
+use std::{sync::Arc, thread::sleep, time::Duration};
 
 // Move inventory to top left and crafting window right to it. Select resipe and press F5 to start.
 pub fn run_craft_loop() {
@@ -28,6 +24,7 @@ pub fn run_craft_loop() {
             MouseButton::RightButton.release();
             sleep(Duration::from_millis(50));
 
+            // Recycle Menu Item
             MouseCursor::move_rel(100, 170);
             sleep(Duration::from_millis(500));
             MouseButton::LeftButton.press();

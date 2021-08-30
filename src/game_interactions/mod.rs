@@ -1,10 +1,13 @@
 mod craftloop;
-use inputbot::{KeybdKey::*, MouseButton::*, *};
+use inputbot::{KeybdKey::*, MouseButton::*, MouseCursor};
+#[cfg(feature = "fishing")]
+use inputbot::{MouseButton, MouseCursor};
 
 use std::{sync::Arc, thread::sleep, time::Duration};
 
 use crate::statics::*;
 
+#[cfg(feature = "fishing")]
 pub enum Direction {
     Up,
     Down,
@@ -12,41 +15,50 @@ pub enum Direction {
     Right,
 }
 
+#[cfg(feature = "fishing")]
 pub fn fishing(what_to_do: Direction) {
     match what_to_do {
         Direction::Up => {
-            MouseCursor::move_rel(0, -10);
             println!("move up");
+            MouseButton::MiddleButton.press();
+            sleep(Duration::from_millis(25));
+            MouseButton::MiddleButton.release();
         }
         Direction::Down => {
             println!("move down");
-            MouseCursor::move_rel(0, 10);
+            GKey.press();
+            sleep(Duration::from_millis(25));
+            GKey.release();
         }
         Direction::Left => {
             println!("move left");
-            MouseCursor::move_rel(-10, 0);
+            QKey.press();
+            sleep(Duration::from_millis(25));
+            QKey.release();
         }
         Direction::Right => {
             println!("move right");
-            MouseCursor::move_rel(10, 0);
+            EKey.press();
+            sleep(Duration::from_millis(25));
+            EKey.release();
         }
     };
-    MouseButton::LeftButton.press();
-    sleep(Duration::from_millis(50));
-    MouseButton::LeftButton.release();
+    // MouseButton::LeftButton.press();
+    // sleep(Duration::from_millis(30));
+    // MouseButton::LeftButton.release();
 }
 
 pub fn register_key_bindings() {
     let r6 = Arc::clone(&RUNNING);
     let c3 = Arc::clone(&COUNTER);
     F10Key.bind(move || {
-        println!("i have enought");
+        println!("i have enough");
         *r6.lock().unwrap() = false;
         *c3.lock().unwrap() = 0;
     });
 }
 
-pub(crate) fn bind_keys_for(mode: crate::shared::BotMode) -> () {
+pub(crate) fn bind_keys_for(mode: crate::shared::BotMode, mouse: (i32, i32)) -> () {
     F9Key.unbind();
 
     match mode {
@@ -77,9 +89,9 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode) -> () {
             let c = Arc::clone(&COUNTER);
             F9Key.bind(move || {
                 *r.lock().unwrap() = true;
-                FKey.press();
+                GKey.press();
                 sleep(Duration::from_millis(50));
-                FKey.release();
+                GKey.release();
                 while *r.lock().unwrap() && *c.lock().unwrap() < 50 {
                     println!("Give me my wood {}", *c.lock().unwrap());
                     MiddleButton.press();
@@ -88,9 +100,9 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode) -> () {
                     sleep(Duration::from_millis(700));
                     *c.lock().unwrap() += 1;
                 }
-                FKey.press();
+                GKey.press();
                 sleep(Duration::from_millis(50));
-                FKey.release();
+                GKey.release();
             });
         }
         crate::shared::BotMode::Iron => {
@@ -99,9 +111,9 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode) -> () {
             F9Key.bind(move || {
                 *c.lock().unwrap() = 0;
                 *r.lock().unwrap() = true;
-                FKey.press();
+                GKey.press();
                 sleep(Duration::from_millis(50));
-                FKey.release();
+                GKey.release();
                 while *r.lock().unwrap() && *c.lock().unwrap() < 18 {
                     println!("Give me my iron {}", *c.lock().unwrap());
                     MiddleButton.press();
@@ -110,9 +122,9 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode) -> () {
                     sleep(Duration::from_millis(900));
                     *c.lock().unwrap() += 1;
                 }
-                FKey.press();
+                GKey.press();
                 sleep(Duration::from_millis(50));
-                FKey.release();
+                GKey.release();
             });
         }
         crate::shared::BotMode::ManyIron => {
@@ -122,23 +134,85 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode) -> () {
                 *c.lock().unwrap() = 0;
                 *r.lock().unwrap() = true;
                 while *r.lock().unwrap() && *c.lock().unwrap() < 18 {
-                    FKey.press();
+                    GKey.press();
                     sleep(Duration::from_millis(50));
-                    FKey.release();
+                    GKey.release();
                     while *c.lock().unwrap() < 18 {
                         println!("Give me my iron {}", *c.lock().unwrap());
                         MiddleButton.press();
-                        sleep(Duration::from_millis(420));
+                        // sleep(Duration::from_millis(420));
                         MiddleButton.release();
                         sleep(Duration::from_millis(900));
                         *c.lock().unwrap() += 1;
                     }
                     *c.lock().unwrap() = 0;
-                    FKey.press();
+                    GKey.press();
                     sleep(Duration::from_millis(50));
-                    FKey.release();
+                    GKey.release();
                     sleep(Duration::from_millis(8000));
                 }
+            });
+        }
+        crate::shared::BotMode::Horse => {
+            let r = Arc::clone(&RUNNING);
+            let c = Arc::clone(&COUNTER);
+            F9Key.bind(move || {
+                *c.lock().unwrap() = 0;
+                *r.lock().unwrap() = true;
+
+                while *r.lock().unwrap()
+                {
+                   LShiftKey.press();
+                   WKey.press();
+                   sleep(Duration::from_secs(30));
+                   LShiftKey.release();
+                   WKey.release();
+                   DKey.press();
+                   sleep(Duration::from_millis(1900));
+                   DKey.release();
+                }
+                
+            });
+        }
+
+        crate::shared::BotMode::SalvageItems  => {
+            let r = Arc::clone(&RUNNING);
+            let c = Arc::clone(&COUNTER);
+            F9Key.bind(move || {
+                *c.lock().unwrap() = 0;
+                *r.lock().unwrap() = true;
+                let (x, y) = mouse;
+
+                while *r.lock().unwrap() && *c.lock().unwrap() < 100
+                {
+                    // open menu on item
+                    MouseCursor::move_abs(x, y);
+                    sleep(Duration::from_millis(50));
+                    RightButton.press();
+                    sleep(Duration::from_millis(50));
+                    RightButton.release();
+                    sleep(Duration::from_millis(50));
+
+                    // Recycle Menu Item
+                    MouseCursor::move_rel(100, 170);
+                    sleep(Duration::from_millis(500));
+                    LeftButton.press();
+                    sleep(Duration::from_millis(50));
+                    LeftButton.release();
+                    sleep(Duration::from_millis(50));
+
+                    // Confirm Button
+                    MouseCursor::move_abs(2420, 730);
+                    sleep(Duration::from_millis(50));
+                    LeftButton.press();
+                    sleep(Duration::from_millis(50));
+                    LeftButton.release();
+                    sleep(Duration::from_millis(50));
+
+                    *c.lock().unwrap() += 1;
+                  
+                }
+                
             });
         }
         // ManyIron => {
