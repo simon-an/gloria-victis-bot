@@ -7,42 +7,48 @@ use opencv::{
 };
 use tesseract::{OcrEngineMode, Tesseract};
 use winapi::shared::minwindef::UCHAR;
+use std::time::{ Instant};
+use std::sync::{Arc, Mutex};
 
 use crate::game_interactions::{self, *};
+use crate::statics::*;
 
 pub async fn run() -> anyhow::Result<()> {
-    // let window = "video capture";
-    // highgui::named_window(
-    //     window,
-    //     WINDOW_AUTOSIZE | WINDOW_KEEPRATIO | WINDOW_GUI_EXPANDED,
-    // )?;
+    let window = "video capture";
+    highgui::named_window(
+        window,
+        WINDOW_AUTOSIZE | WINDOW_KEEPRATIO | WINDOW_GUI_EXPANDED,
+    )?;
     let mut cam = videoio::VideoCapture::new(1, videoio::CAP_ANY)?; // 0 is the default camera
-    cam.set(3, 2560.0)?;
+    // cam.set(3, 2560.0)?;
     // cam.set(3, 5120f64)?;
-    cam.set(4, 1440f64)?;
-    // cam.set(3, 1920f64)?;
-    // cam.set(4, 1080f64)?;
+    // cam.set(4, 1440f64)?;
+    cam.set(3, 1920f64)?;
+    cam.set(4, 1080f64)?;
     let opened = cam.is_opened()?;
     if !opened {
         panic!("Unable to open default camera!");
     }
 
-    let folder = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let folder = format!("{}/{}", folder, "tessdata");
-    println!("{}", folder);
-    std::env::set_var("TESSDATA_PREFIX", folder);
+    if let Ok(folder) = std::env::var("CARGO_MANIFEST_DIR") {
+        let folder = format!("{}/{}", folder, "tessdata");
+        println!("{}", folder);
+        std::env::set_var("TESSDATA_PREFIX", folder);
+    } else {
+        std::env::set_var("TESSDATA_PREFIX", "./tessdata");
+    }
     let mut roi_selected = false;
     // let mut rect = None;
     let mut previous_text = "".to_string();
     // Full HD??
-    // let rect = core::Rect {  x: 584, y: 678, width: 178, height: 236 };
+    let rect = Some( core::Rect {  x: 584, y: 678, width: 178, height: 236 });
     // 2560x1440
-    let rect = Some(core::Rect {
-        x: 700,
-        y: 830,
-        width: 320,
-        height: 326,
-    });
+    // let rect = Some(core::Rect {
+    //     x: 700,
+    //     y: 830,
+    //     width: 320,
+    //     height: 326,
+    // });
     // 5120 x 1440
     // let rect = core::Rect {   x: 1905, y: 736, width: 478, height: 472 };
     loop {
@@ -90,8 +96,8 @@ pub async fn run() -> anyhow::Result<()> {
                 // println!("{:?}", frame);
 
                 // println!("{:?} {:?} {:?} {:?} {:?}", text2.cols(), text2.rows(), text2.dims(), text2.typ(), text2.channels().unwrap());
-                // highgui::imshow(window, &mat)?;
-                // highgui::wait_key(10).unwrap();
+                highgui::imshow(window, &mat)?;
+                highgui::wait_key(10).unwrap();
                 let temp = Tesseract::new_with_oem(None, Some("deu"), OcrEngineMode::Default)?;
                 let only_lstm_str = temp
                     .set_frame(&frame, mat.cols(), mat.rows(), 1i32, mat.cols())?
@@ -102,14 +108,39 @@ pub async fn run() -> anyhow::Result<()> {
                 // log::info!("{} - {}", only_lstm_str, previous_text);
                 if only_lstm_str != previous_text {
                     previous_text = only_lstm_str.clone();
+                    let timer = Arc::clone(&TIMER_FRAME_MATCH);
+
                     let dir = if only_lstm_str.contains("Nach rechts ziehen") {
-                        Some(Direction::Right)
+                        if (*timer.lock().unwrap()).elapsed().as_millis() > 1000 {
+                            *timer.lock().unwrap() = Instant::now();
+                            Some(Direction::Right)
+                        } else {
+                            None
+                        }
                     } else if only_lstm_str.contains("Nach links ziehen") {
-                        Some(Direction::Left)
+                        if (*timer.lock().unwrap()).elapsed().as_millis() > 1000 {
+                            *timer.lock().unwrap() = Instant::now();
+                            Some(Direction::Left)
+                        }
+                        else {
+                            None
+                        }
                     } else if only_lstm_str.contains("Hoch ziehen") {
-                        Some(Direction::Up)
+                        if (*timer.lock().unwrap()).elapsed().as_millis() > 1000 {
+                            *timer.lock().unwrap() = Instant::now();
+                            Some(Direction::Up)
+                        }
+                        else {
+                            None
+                        }
                     } else if only_lstm_str.contains("Absenken") {
-                        Some(Direction::Down)
+                        if (*timer.lock().unwrap()).elapsed().as_millis() > 1000 {
+                            *timer.lock().unwrap() = Instant::now();
+                            Some(Direction::Down)
+                        }
+                        else {
+                            None
+                        }
                     } else if only_lstm_str.contains("Fischen erfolgreich!") {
                         log::info!("YESSS!");
                         None

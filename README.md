@@ -19,6 +19,10 @@ tested toolchains:
 - needs tesseract (install using vcpkg)
 - needs opencv (install using vcpkg)
 
+### Production build:
+
+Requires vcpkg triplet x64-windows-static-md to be installed for all required packages
+
 #### Environment Variables
 
 SET VCPKG_ROOT=D:\gloria-victis-bot\tessdata

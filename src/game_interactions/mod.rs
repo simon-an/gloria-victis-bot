@@ -1,7 +1,5 @@
 mod craftloop;
-use inputbot::{KeybdKey::*, MouseButton::*, MouseCursor};
-#[cfg(feature = "fishing")]
-use inputbot::{MouseButton, MouseCursor};
+use inputbot::{KeybdKey::*, MouseButton::{self, *}, MouseCursor};
 
 use std::{sync::Arc, thread::sleep, time::Duration};
 
@@ -26,15 +24,16 @@ pub fn fishing(what_to_do: Direction) {
         }
         Direction::Down => {
             println!("move down");
-            GKey.press();
+            FKey.press();
             sleep(Duration::from_millis(25));
-            GKey.release();
+            FKey.release();
         }
         Direction::Left => {
             println!("move left");
             QKey.press();
             sleep(Duration::from_millis(25));
             QKey.release();
+
         }
         Direction::Right => {
             println!("move right");
@@ -43,9 +42,7 @@ pub fn fishing(what_to_do: Direction) {
             EKey.release();
         }
     };
-    // MouseButton::LeftButton.press();
-    // sleep(Duration::from_millis(30));
-    // MouseButton::LeftButton.release();
+    // sleep(Duration::from_millis(1000));
 }
 
 pub fn register_key_bindings() {
@@ -114,12 +111,13 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode, mouse: (i32, i32)) -> 
                 GKey.press();
                 sleep(Duration::from_millis(50));
                 GKey.release();
-                while *r.lock().unwrap() && *c.lock().unwrap() < 18 {
+                sleep(Duration::from_millis(3000));
+                while *r.lock().unwrap() && *c.lock().unwrap() < 25 {
                     println!("Give me my iron {}", *c.lock().unwrap());
                     MiddleButton.press();
-                    sleep(Duration::from_millis(420));
+                    sleep(Duration::from_millis(20));
                     MiddleButton.release();
-                    sleep(Duration::from_millis(900));
+                    sleep(Duration::from_millis(1600));
                     *c.lock().unwrap() += 1;
                 }
                 GKey.press();
@@ -133,16 +131,16 @@ pub(crate) fn bind_keys_for(mode: crate::shared::BotMode, mouse: (i32, i32)) -> 
             F9Key.bind(move || {
                 *c.lock().unwrap() = 0;
                 *r.lock().unwrap() = true;
-                while *r.lock().unwrap() && *c.lock().unwrap() < 18 {
+                while *r.lock().unwrap() && *c.lock().unwrap() < 25 {
                     GKey.press();
                     sleep(Duration::from_millis(50));
                     GKey.release();
-                    while *c.lock().unwrap() < 18 {
+                    while *r.lock().unwrap() && *c.lock().unwrap() < 25 {
                         println!("Give me my iron {}", *c.lock().unwrap());
                         MiddleButton.press();
-                        // sleep(Duration::from_millis(420));
+                        sleep(Duration::from_millis(20));
                         MiddleButton.release();
-                        sleep(Duration::from_millis(900));
+                        sleep(Duration::from_millis(1600));
                         *c.lock().unwrap() += 1;
                     }
                     *c.lock().unwrap() = 0;
