@@ -1,11 +1,11 @@
-use bindings::{
-    Windows::Data::Xml::Dom::*,
-    Windows::Win32::Foundation::CloseHandle,
-    Windows::Win32::System::Threading::{CreateEventW, SetEvent, WaitForSingleObject},
-    Windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_OK},
+use windows::{
+    Data::Xml::Dom::*,
+    Win32::Foundation::CloseHandle,
+    Win32::System::Threading::{CreateEventW, SetEvent, WaitForSingleObject},
+    Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_OK},
 };
 
-fn main() -> windows::Result<()> {
+fn main() -> windows::runtime::Result<()> {
     let doc = XmlDocument::new()?;
     doc.LoadXml("<html>hello world</html>")?;
 

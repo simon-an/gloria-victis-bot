@@ -1,3 +1,4 @@
+use image::{DynamicImage, ImageBuffer, RgbImage, Rgba, RgbaImage};
 use opencv::{
     core::{self, bitwise_not, Vec3b},
     highgui::{self, WINDOW_AUTOSIZE, WINDOW_GUI_EXPANDED, WINDOW_KEEPRATIO},
@@ -6,14 +7,15 @@ use opencv::{
     videoio,
 };
 use tesseract::{OcrEngineMode, Tesseract};
-use winapi::shared::minwindef::UCHAR;
-use std::time::{ Instant};
+use std::{convert::TryInto, time::{ Instant}};
 use std::sync::{Arc, Mutex};
+use tokio::sync::mpsc::Sender;
 
 use crate::game_interactions::{self, *};
 use crate::statics::*;
 
-pub async fn run() -> anyhow::Result<()> {
+
+pub async fn run(channel: Sender<DynamicImage>) -> anyhow::Result<()> {
     let window = "video capture";
     highgui::named_window(
         window,
@@ -41,7 +43,8 @@ pub async fn run() -> anyhow::Result<()> {
     // let mut rect = None;
     let mut previous_text = "".to_string();
     // Full HD??
-    let rect = Some( core::Rect {  x: 584, y: 678, width: 178, height: 236 });
+    // Window mode
+    let rect = Some( core::Rect {  x: 534, y: 678, width: 200, height: 200 });
     // 2560x1440
     // let rect = Some(core::Rect {
     //     x: 700,
@@ -55,6 +58,10 @@ pub async fn run() -> anyhow::Result<()> {
         let mut frame = Mat::default();
         cam.read(&mut frame)?;
         if frame.size()?.width > 0 {
+
+        // TODO Maybe resize?
+        // https://gist.github.com/rinogo/294e723ac9e53c23d131e5852312dfe8
+
             // let pixel = frame.at_2d::<Vec3b>(877,961)?;
             // println!("pixel: {:?}", pixel);
 
@@ -88,10 +95,17 @@ pub async fn run() -> anyhow::Result<()> {
             if let Some(rect) = rect {
                 // println!("{:?}", rect);
                 let img = Mat::roi(&frame, rect)?;
+                let size = img.size()?;
+                let mat: Mat = pre2(img)?;
 
-                let mat = pre2(img)?;
-
-                let frame = mat.data_typed::<u8>()?;
+                
+                
+                let frame: &[u8] = mat.data_typed::<u8>()?;
+                use image::io::Reader as ImageReader;
+                let image = ImageReader::new(std::io::Cursor::new(frame.to_vec())).with_guessed_format()?.decode()?;
+                // let buffer: Option<RgbImage> = ImageBuffer::from_raw(size.width.try_into().unwrap(), size.height.try_into().unwrap(), frame.to_vec());
+                // let image: DynamicImage = DynamicImage::ImageRgb8(buffer.unwrap());
+                channel.send(image).await?;
 
                 // println!("{:?}", frame);
 
@@ -101,6 +115,7 @@ pub async fn run() -> anyhow::Result<()> {
                 let temp = Tesseract::new_with_oem(None, Some("deu"), OcrEngineMode::Default)?;
                 let only_lstm_str = temp
                     .set_frame(&frame, mat.cols(), mat.rows(), 1i32, mat.cols())?
+                    .set_source_resolution(100i32)
                     .recognize()?
                     .get_text()?
                     .trim()
@@ -148,7 +163,10 @@ pub async fn run() -> anyhow::Result<()> {
                         log::info!("Incoming!");
                         None
                     } else if only_lstm_str.contains("Fischgrund") {
-                        log::info!("Waiting!");
+                        if (*timer.lock().unwrap()).elapsed().as_millis() > 1000 {
+                            *timer.lock().unwrap() = Instant::now();
+                            log::info!("Waiting!");
+                        }
                         None
                     } else {
                         None
@@ -229,3 +247,4 @@ fn pre1(img: Mat) -> anyhow::Result<Mat> {
     )?;
     Ok(text)
 }
+

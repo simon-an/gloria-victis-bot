@@ -3,7 +3,7 @@ use glium::glutin::event::{Event, WindowEvent};
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
 use glium::glutin::window::WindowBuilder;
 use glium::{Display, Surface};
-use imgui::{Context, FontConfig, FontSource, Ui};
+use imgui::{ClipboardBackend, Context, FontConfig, FontSource, Ui};
 use imgui_glium_renderer::Renderer;
 use imgui_winit_support::{HiDpiMode, WinitPlatform};
 use std::path::Path;
@@ -40,11 +40,11 @@ pub fn init(title: &str) -> System {
     let mut imgui = Context::create();
     imgui.set_ini_filename(None);
 
-    if let Some(backend) = clipboard::init() {
-        imgui.set_clipboard_backend(Box::new(backend));
-    } else {
-        eprintln!("Failed to initialize clipboard");
-    }
+    // if let Some(backend) = clipboard::init() {
+    //     imgui.set_clipboard_backend(backend);
+    // } else {
+    //     eprintln!("Failed to initialize clipboard");
+    // }
 
     let mut platform = WinitPlatform::init(&mut imgui);
     {

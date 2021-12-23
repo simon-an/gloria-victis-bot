@@ -11,6 +11,10 @@ lazy_static! {
         let counter: Arc<Mutex<u32>> = Arc::new(Mutex::new(0));
         counter
     };
+    pub static ref COUNTER_TARGET: Arc<Mutex<u32>> = {
+        let counter: Arc<Mutex<u32>> = Arc::new(Mutex::new(0));
+        counter
+    };
     pub static ref TIMER_FRAME_MATCH: Arc<Mutex<Instant>> = {
         let timer: Arc<Mutex<Instant>> = Arc::new(Mutex::new( Instant::now()));
         timer

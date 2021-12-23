@@ -11,19 +11,19 @@ use opencv::{
 
 fn main() -> Result<()> {
     let window = "demo";
-    let blox_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/blox.jpg");
+    let blox_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("images/hoch.png");
     let img = imgcodecs::imread(blox_path.to_str().unwrap(), imgcodecs::IMREAD_ANYCOLOR)?;
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
     highgui::imshow(window, &img)?;
-    std::thread::sleep(Duration::from_secs(5));
+    highgui::wait_key(10000).unwrap();
     let mut orb = <dyn ORB>::default()?;
     let mut kp = VectorOfKeyPoint::new();
     let mut des = Mat::default();
     orb.detect_and_compute(&img, &Mat::default(), &mut kp, &mut des, false)?;
     let size = if cfg!(ocvrs_opencv_branch_32) {
-        296
+        35
     } else {
-        290
+        35
     };
     assert_eq!(size, kp.len());
     assert_eq!(Size::new(32, size as i32), des.size()?);
@@ -37,7 +37,7 @@ fn main() -> Result<()> {
         opencv::features2d::DrawMatchesFlags::DEFAULT,
     )?;
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
-    highgui::imshow(window, &img)?;
-    std::thread::sleep(Duration::from_secs(5));
+    highgui::imshow(window, &res)?;
+    highgui::wait_key(10000).unwrap();
     Ok(())
 }

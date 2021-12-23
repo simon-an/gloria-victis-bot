@@ -8,6 +8,7 @@ pub enum BotMode {
     CraftLoop,
     Horse,
     SalvageItems,
+    PosCheck,
 }
 
 impl BotMode {
@@ -21,6 +22,7 @@ impl BotMode {
             BotMode::CraftLoop,
             BotMode::Horse,
             BotMode::SalvageItems,
+            BotMode::PosCheck,
         ]
     }
     pub fn to_string(self) -> String {
@@ -33,6 +35,7 @@ impl BotMode {
             Self::CraftLoop => "CraftLoop".to_string(),
             Self::Horse => "RideHorse".to_string(),
             Self::SalvageItems => "SalvageItems".to_string(),
+            Self::PosCheck => "PosCheck".to_string(),
         }
     }
 }

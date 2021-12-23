@@ -1,11 +1,11 @@
-use bindings::{
-    // Windows::Win32::Graphics::DirectShow::*
-};
-
-fn main() -> windows::Result<()> {
+use windows::Win32::Graphics::DirectShow::{*, self};
 
 
-    // let b = ICaptureGraphBuilder2::
+fn main() -> windows::runtime::Result<()> {
+
+    unsafe  {
+        // let b = DirectShow::ICaptureGraphBuilder2::FindInterface(&self, LOOK_UPSTREAM_ONLY, ptype, pf, riid, ppint);
+    }
 
     Ok(())
 }
