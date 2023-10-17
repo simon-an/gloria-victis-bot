@@ -1,6 +1,6 @@
 [package]
 authors = ["simon"]
-edition = "2018"
+edition = "2021"
 name = "gloria-victis-bot"
 version = "0.1.0"
 
@@ -14,40 +14,58 @@ fishing = ["opencv", "tesseract"]
 # windows = "0.25"
 
 anyhow = "1.0"
-env_logger = "0.9"
-inputbot = "0.5.1"
+env_logger = "0.10.0"
+inputbot = "0.6.0"
 lazy_static = "1.4"
 log = "0.4"
-winapi = {version = "0.3.8", features = ["d3d11", "d3dcommon", "dxgi", "dxgi1_2", "dxgitype", "ntdef", "unknwnbase", "windef", "winerror", "winuser"]}
+winapi = { version = "0.3.8", features = [
+  "d3d11",
+  "d3dcommon",
+  "dxgi",
+  "dxgi1_2",
+  "dxgitype",
+  "ntdef",
+  "unknwnbase",
+  "windef",
+  "winerror",
+  "winuser",
+] }
 # "basetsd", "d3d11", "d3d11sdklayers", "d3d12", "d3d12sdklayers", "d3d12shader", "d3dcommon", "d3dcompiler", "dxgi", "dxgi1_2", "dxgi1_3", "dxgi1_4", "dxgi1_5", "dxgi1_6", "dxgidebug", "dxgiformat", "dxgitype", "handleapi", "minwindef", "synchapi", "unknwnbase", "winbase", "windef","winerror", "winnt", "winuser", "impl-default", "impl-debug"
-clipboard = "0.5"
-eframe = "0.15"
-egui = "0.15"
-egui_winit_platform = "0.11.0"
-glium = {version = "0.30", default-features = true}
-image = "0.23.14"
-imageproc = "0.22"
-imgui = "0.8"
-imgui-glium-renderer = "0.8"
-imgui-winit-support = "0.8"
-winit = "0.25"
+clipboard = "0.5.0"
+eframe = { version = "0.23.0", features = [
+  "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+  "default_fonts", # Embed the default egui fonts.
+  "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+  "persistence",   # Enable restoring app state when restarting the app.
+] }
+egui = { versions = "0.23.0", features = ["bytemuck", "tracing"] }
+egui_extras = { version = "*", features = ["all_loaders"] }
+image = { version = "0.24", features = ["jpeg", "png"] } # 
+egui_winit_platform = "0.19.0"
+glium = { version = "0.32.1", default-features = true }
+imageproc = "0.23.0"
+imgui = "0.11.0"
+imgui-glium-renderer = "0.11.0"
+imgui-winit-support = "0.11.0"
+serde = { version = "1.0", features = ["derive"] }
+winit = "0.28"
 wio = "0.2.2"
 
 # imageproc = { version = "0.22", features = ["display-window"] , optional = true }
 # opencv = {version = "0.53" }
-opencv = {version = "0.60", features = ["clang-runtime"], optional = true}
+opencv = { version = "0.85.1", features = ["clang-runtime"], optional = true }
 rand = "0.8.4"
-raw-window-handle = "0.3.3"
-tesseract = {version = "0.9", optional = true}
-tokio = {version = "1.13", features = ["full", "macros"]}
+raw-window-handle = "0.6.0"
+tesseract = { version = "0.15.0", optional = true }
+tokio = { version = "1.13", features = ["full", "macros"] }
 
 [dev-dependencies]
 # cv = { git = "https://github.com/rust-cv/cv.git", features =  ["akaze"], default-features = true }
 # web-sys = "0.3.54"
 # bindings = { path = "bindings" }
 futures = "0.3"
-opencv = {version = "0.57.0", features = ["clang-runtime"]}
-tesseract = {version = "0.9"}
+opencv = { version = "0.85.1", features = ["clang-runtime"] }
+tesseract = { version = "0.15.0" }
 vcpkg = "0.2"
 
 [dev-dependencies.windows]
@@ -64,8 +82,7 @@ features = [
   "Graphics_Imaging",
   "Storage_Streams",
   "Foundation",
-  "Foundation_Collections",
-  "Win32_Graphics_DirectShow",
+  "Foundation_Collections",          # "Win32_Graphics_DirectShow",
   "UI_Input",
   "Devices_Input",
   "Devices_Input_Preview",
@@ -75,6 +92,6 @@ features = [
   "Win32_System_Threading",
   "Win32_UI_WindowsAndMessaging",
   "Win32_Security",
-  "Win32_Foundation"
+  "Win32_Foundation",
 ]
-version = "0.25"
+version = "0.51.1"

@@ -1,47 +1,80 @@
 use crate::{desktop::window_size, shared::BotMode};
 use crate::{game_interactions, statics::*, Resolution};
-use eframe::{egui, epi};
+use eframe::egui::load::SizedTexture;
+use eframe::egui::{self, ImageSource};
 use egui::{ComboBox, ScrollArea};
-use inputbot::MouseCursor;
-use tokio::sync::mpsc::Receiver;
-use std::sync::Arc;
 use image::*;
+use inputbot::MouseCursor;
+use std::sync::Arc;
+use tokio::sync::mpsc::Receiver;
 
-#[derive(Default)]
-pub struct MyApp {
+impl<'a> Default for MyApp<'a> {
+    fn default() -> Self {
+        Self {
+            texture: None,
+            mode: BotMode::default(),
+            animate_progress_bar: true,
+            text: "".to_string(),
+            error: "".to_string(),
+            channel: None,
+        }
+    }
+}
+
+/// We derive Deserialize/Serialize so we can persist app state on shutdown.
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)] // if we add new fields, give them default values when deserializing old state
+pub struct MyApp<'a> {
     // texture: Option<egui::TextureId>,
-    texture: Option<(egui::Vec2, egui::TextureId)>,
+    // texture: Option<(egui::Vec2, egui::TextureId)>,
+    #[serde(skip)]
+    texture: Option<egui::ImageSource<'a>>,
     mode: BotMode,
     animate_progress_bar: bool,
     text: String,
     error: String,
-    channel: Option<Receiver<DynamicImage>>
+    #[serde(skip)]
+    channel: Option<Receiver<DynamicImage>>,
 }
 
-impl MyApp {
-    fn new (channel: Receiver<DynamicImage>) -> Self {
+impl<'a> MyApp<'a> {
+    fn new(channel: Receiver<DynamicImage>, cc: &eframe::CreationContext<'_>) -> Self {
+        // This is also where you can customize the look and feel of egui using
+        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+
+        // Load previous app state (if any).
+        // Note that you must enable the `persistence` feature for this to work.
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
         Self {
             channel: Some(channel),
             ..Default::default()
         }
     }
+
+    /// Called by the frame work to save state before shutdown.
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, self);
+    }
 }
 
-pub fn create(channel: Receiver<DynamicImage>) -> !{
+pub fn create(channel: Receiver<DynamicImage>) -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         // Let's show off that we support transparent windows
         transparent: true,
+        initial_window_size: Some([400.0, 300.0].into()),
+        min_window_size: Some([300.0, 220.0].into()),
         ..Default::default()
     };
-    let app = Box::new(MyApp::new(channel));
-    eframe::run_native(app, options);
+    eframe::run_native(
+        "✨ GV BOT",
+        options,
+        Box::new(|cc| Box::new(MyApp::new(channel, cc))),
+    )
 }
 
-impl epi::App for MyApp {
-    fn name(&self) -> &str {
-        "✨ GV BOT"
-    }
-
+impl<'a> eframe::App for MyApp<'a> {
     // fn ui(&mut self, ctx: &CtxRef, integration_context: &mut IntegrationContext) {
     //     let repaint_signal = integration_context.repaint_signal.clone();
     //     let thread = std::thread::spawn(move || {
@@ -66,57 +99,43 @@ impl epi::App for MyApp {
     //     self.texture = Some((size, texture));
     // }
 
-    fn update(&mut self, ctx: &egui::CtxRef, frame: &mut epi::Frame<'_>) {
-        
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui_extras::install_image_loaders(ctx);
         if let Some(receiver) = &mut self.channel {
             // Are we there yet?
             match receiver.try_recv() {
                 Ok(image) => {
-                    // let image = image::load_from_memory(&res).expect("Failed to load image");
+                    // // let image = image::load_from_memory(&res).expect("Failed to load image");
                     let image_buffer = image.to_rgba8();
                     let size = (image.width() as usize, image.height() as usize);
                     let pixels = image_buffer.into_vec();
                     assert_eq!(size.0 * size.1 * 4, pixels.len());
-                    let pixels: Vec<_> = pixels
-                        .chunks_exact(4)
-                        .map(|p| egui::Color32::from_rgba_unmultiplied(p[0], p[1], p[2], p[3]))
-                        .collect();
-        
-        
-                    // Allocate a texture:q
-                    let texture = frame
-                        .tex_allocator()
-                        .alloc_srgba_premultiplied(size, &pixels);
-                    let size = egui::Vec2::new(size.0 as f32, size.1 as f32);
-                    self.texture = Some((size, texture));
-                },
-                Err(_) => {
-
+                    // let pixels: Vec<_> = pixels
+                    //     .chunks_exact(4)
+                    //     .map(|p| egui::Color32::from_rgba_unmultiplied(p[0], p[1], p[2], p[3]))
+                    //     .collect();
+                    let img =
+                        egui::ColorImage::from_rgba_unmultiplied(size.into(), pixels.as_slice());
+                    let texture = ctx.load_texture("my-image", img, Default::default());
+                    let src = ImageSource::Texture(SizedTexture::from_handle(&texture));
+                    self.texture = Some(src);
                 }
+                Err(_) => {}
             }
         }
 
         if self.texture.is_none() {
-            let image_data = include_bytes!("../../images/blox.jpg");
-
-            let image = image::load_from_memory(image_data).expect("Failed to load image");
-            let image_buffer = image.to_rgba8();
-            let size = (image.width() as usize, image.height() as usize);
-            let pixels = image_buffer.into_vec();
-            assert_eq!(size.0 * size.1 * 4, pixels.len());
-            let pixels: Vec<_> = pixels
-                .chunks_exact(4)
-                .map(|p| egui::Color32::from_rgba_unmultiplied(p[0], p[1], p[2], p[3]))
-                .collect();
-
-
-            // Allocate a texture:q
-            let texture = frame
-                .tex_allocator()
-                .alloc_srgba_premultiplied(size, &pixels);
-            let size = egui::Vec2::new(size.0 as f32, size.1 as f32);
-            self.texture = Some((size, texture));
-            // self.texture = Some(texture);
+            let img: ImageSource = egui::include_image!("../../images/blox.jpg");
+            // let texture: &egui::TextureHandle = self.texture.insert(
+            //     // Load the texture only once.
+            //     ctx.load_texture("default-image", img, Default::default()),
+            // );
+            // let img = egui::Image::new(img).rounding(5.0);
+            // // let image_data = include_bytes!("../../images/blox.jpg");
+            // // let img: eframe::epaint::FontImage = egui::FontImage::new(
+            // //     [256, 256],
+            // // );
+            self.texture = Some(img);
         }
 
         let Self {
@@ -142,11 +161,9 @@ impl epi::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.heading("Here is an image for you:");
-                if let Some((size, texture)) = texture {
-                    ui.image(*texture, *size);
-
+                if let Some(texture) = texture {
+                    ui.image(texture.clone());
                     // ui.heading("This is an image you can click:");
-                    // ui.add(egui::ImageButton::new(texture, size));
                 }
             });
         });
@@ -155,7 +172,7 @@ impl epi::App for MyApp {
             .min_width(200.0)
             .default_width(250.0)
             .show(ctx, |ui| {
-                egui::trace!(ui);
+                // egui::trace!(ui);
                 ui.vertical_centered(|ui| {
                     ui.heading("✒ modi");
                     ui.separator();
@@ -208,7 +225,7 @@ impl epi::App for MyApp {
                             let progress_bar = egui::ProgressBar::new(progress)
                                 .show_percentage()
                                 .animate(*animate_progress_bar);
-                            /**animate_progress_bar = */
+                            /* animate_progress_bar = */
                             ui.add(progress_bar);
                             // .on_hover_text("The progress bar can be animated!")
                             // .hovered();

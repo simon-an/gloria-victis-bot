@@ -22,10 +22,13 @@ tested toolchains:
 ### Production build:
 
 Requires vcpkg triplet x64-windows-static-md to be installed for all required packages
+Requires vcpkg triplet x64-windows to be installed for all required packages
 
 #### Environment Variables
 
-SET VCPKG_ROOT=D:\gloria-victis-bot\tessdata
+
+SET VCPKG_ROOT=D:\gloria-victis-bot\tessdata <==This looks strange
+SET VCPKG_ROOT=C:\dev\vcpkg <==Current Value
 
 SET VCPKG_DEFAULT_TRIPLET=x64-windows
 SET VCPKGRS_DYNAMIC=true

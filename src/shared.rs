@@ -1,5 +1,6 @@
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
 pub enum BotMode {
+    #[default]
     Disabled,
     Water,
     Wood,
@@ -37,11 +38,5 @@ impl BotMode {
             Self::SalvageItems => "SalvageItems".to_string(),
             Self::PosCheck => "PosCheck".to_string(),
         }
-    }
-}
-
-impl Default for BotMode {
-    fn default() -> Self {
-        BotMode::Disabled
     }
 }
